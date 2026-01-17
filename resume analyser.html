@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>>Resume Text Analyzer and Question Generation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<style>
+:root {
+    --primary-bg: #1a73e8;
+    --secondary-bg: #eaf4ff;
+    --panel-text: #ffffff;
+    --text-color: #000000;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+header {
+    background-color: var(--primary-bg);
+    color: var(--panel-text);
+    padding: 20px;
+    text-align: center;
+}
+
+main {
+    display: flex;
+    min-height: 90vh;
+}
+
+.left-panel {
+    background-color: var(--primary-bg);
+    color: var(--panel-text);
+    padding: 20px;
+    width: 35%;
+}
+
+.right-panel {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    padding: 20px;
+    width: 65%;
+}
+
+.resume-box {
+    background-color: #ffffff;
+    color: #000000;
+    padding: 12px;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+}
+
+button {
+    margin-top: 12px;
+    padding: 10px 18px;
+    border-radius: 14px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #ffffff;
+    color: #000000;
+}
+
+button:hover {
+    opacity: 0.85;
+}
+
+@media (max-width: 800px) {
+    main { flex-direction: column; }
+    .left-panel, .right-panel { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<header id="header">
+    <h1>Resume Text Analyzer and Question Generation</h1>
+</header>
+
+<main>
+    <div class="left-panel">
+        <h2>Upload Resume</h2>
+        <input type="file" id="pdfUpload" accept="application/pdf">
+
+        <p>Total resumes uploaded: <span id="resumeCount">0</span></p>
+        <button id="resetCount">Reset Resume Count</button>
+
+        <h2>Choose Theme Color</h2>
+        <input type="color" id="themeColor" value="#1a73e8">
+    </div>
+
+    <div class="right-panel">
+        <h2>Uploaded Resume</h2>
+        <div id="resumeDisplay" class="resume-box"></div>
+
+        <h2>Interview Questions</h2>
+        <ul id="questionList"></ul>
+
+        <h2>Professional Resume Format</h2>
+        <div id="formattedResume" class="resume-box"></div>
+
+        <h2>Skill Assessment</h2>
+        <div id="skillAssessment"></div>
+    </div>
+</main>
+
+<script>
+const fileInput = document.getElementById("pdfUpload");
+const resumeDisplay = document.getElementById("resumeDisplay");
+const questionList = document.getElementById("questionList");
+const formattedResume = document.getElementById("formattedResume");
+const skillAssessment = document.getElementById("skillAssessment");
+const resumeCountSpan = document.getElementById("resumeCount");
+const resetBtn = document.getElementById("resetCount");
+const themeColor = document.getElementById("themeColor");
+
+let resumeCount = parseInt(localStorage.getItem("resumeCount")) || 0;
+resumeCountSpan.textContent = resumeCount;
+
+/* Reset Resume Count */
+resetBtn.onclick = () => {
+    resumeCount = 0;
+    localStorage.setItem("resumeCount", 0);
+    resumeCountSpan.textContent = 0;
+};
+
+/* Theme Change */
+themeColor.oninput = () => {
+    const color = themeColor.value;
+    document.documentElement.style.setProperty("--primary-bg", color);
+
+    const brightness = getBrightness(color);
+    if (brightness < 140) {
+        document.documentElement.style.setProperty("--panel-text", "#ffffff");
+        document.documentElement.style.setProperty("--text-color", "#ffffff");
+        document.documentElement.style.setProperty("--secondary-bg", "#0f172a");
+    } else {
+        document.documentElement.style.setProperty("--panel-text", "#000000");
+        document.documentElement.style.setProperty("--text-color", "#000000");
+        document.documentElement.style.setProperty("--secondary-bg", "#eaf4ff");
+    }
+};
+
+function getBrightness(hex) {
+    hex = hex.replace("#", "");
+    const r = parseInt(hex.substr(0,2),16);
+    const g = parseInt(hex.substr(2,2),16);
+    const b = parseInt(hex.substr(4,2),16);
+    return (r*299 + g*587 + b*114) / 1000;
+}
+
+/* PDF Upload */
+fileInput.onchange = async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    resumeCount++;
+    localStorage.setItem("resumeCount", resumeCount);
+    resumeCountSpan.textContent = resumeCount;
+
+    const reader = new FileReader();
+    reader.onload = async function () {
+        const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
+        let text = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map(i => i.str).join(" ") + "\n";
+        }
+
+        resumeDisplay.textContent = text;
+        generateInterviewQuestions(text);
+        formatProfessionalResume(text);
+        analyzeSkills(text);
+    };
+    reader.readAsArrayBuffer(file);
+};
+
+/* Interview Questions */
+function generateInterviewQuestions(text) {
+    questionList.innerHTML = "";
+    const q = [
+        "Can you walk me through your resume?",
+        "What are your strongest skills?"
+    ];
+    if (/java/i.test(text)) q.push("Explain a Java project you worked on.");
+    if (/python/i.test(text)) q.push("How have you used Python?");
+    if (/sql|database/i.test(text)) q.push("Describe a database you worked with.");
+    if (/team|lead/i.test(text)) q.push("Describe your role in a team.");
+
+    q.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        questionList.appendChild(li);
+    });
+}
+
+/* Resume Formatting */
+function formatProfessionalResume(text) {
+    const sections = ["education","experience","projects","skills"];
+    let result = "PROFESSIONAL RESUME\n\n";
+    let missing = [];
+
+    sections.forEach(sec => {
+        if (text.toLowerCase().includes(sec)) {
+            result += sec.toUpperCase() + "\n" + "Details found\n\n";
+        } else {
+            missing.push(sec);
+            result += sec.toUpperCase() + "\n(Add " + sec + " details)\n\n";
+        }
+    });
+
+    if (missing.length === 0)
+        result = "The resume is already in correct professional format.";
+
+    formattedResume.textContent = result;
+}
+
+/* Skill Analysis */
+function analyzeSkills(text) {
+    const skills = ["java","python","sql","javascript","html","css","communication","teamwork"];
+    text = text.toLowerCase();
+    const matched = skills.filter(s => text.includes(s));
+    const score = Math.round((matched.length / skills.length) * 100);
+
+    let level = "Needs Improvement";
+    if (score >= 70) level = "Highly Skilled";
+    else if (score >= 40) level = "Moderately Skilled";
+
+    skillAssessment.textContent =
+        `Skill Match: ${score}% (${level})\nMatched Skills: ${matched.join(", ")}`;
+}
+</script>
+
+</body>
+</html>

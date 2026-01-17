@@ -1,0 +1,59 @@
+/* ===============================
+   Resume Display Box
+   =============================== */
+.resume-box {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #d1d5db;
+    padding: 12px;
+    margin-top: 10px;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: Arial, sans-serif;
+    border-radius: 6px;
+}
+
+/* ===============================
+   Reset Button Styling
+   =============================== */
+#resetCount {
+    margin-top: 15px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 14px;          /* curved rectangular */
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #ffffff;
+    color: #1a73e8;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+/* Hover effect */
+#resetCount:hover {
+    background-color: #dbeafe;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
+
+/* ===============================
+   Text Color Helpers (Theme Safe)
+   =============================== */
+.light-text {
+    color: #ffffff !important;
+}
+
+.dark-text {
+    color: #000000 !important;
+}
+
+/* ===============================
+   Heading Safety
+   =============================== */
+.right-panel h2 {
+    color: inherit;
+}
+header h1 {
+    font-weight: bold;
+}
